@@ -3,4 +3,7 @@ Financial_Platform.tar.gz
 *.pdf
 *.json
 
+
+.env
+
 /data/*

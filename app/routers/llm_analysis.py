@@ -10,10 +10,14 @@ from fastapi import APIRouter, HTTPException, Depends, Form, Query, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
 from app.services.crawler_service import CrawlerService
 from app.services.llm_analysis_service import LLMAnalysisService
 from app.models.crawler_models import CrawlRequest
+
+# 加载环境变量
+load_dotenv()
 
 # 创建路由
 router = APIRouter(
@@ -29,8 +33,9 @@ templates = Jinja2Templates(directory="templates")
 crawler_service = CrawlerService()
 
 # 从环境变量获取API密钥，如果没有则使用默认值（实际使用时应当配置真实的API密钥）
-api_key = os.environ.get("OPENAI_API_KEY", "")
-llm_analyzer = LLMAnalysisService(api_key=api_key)
+api_key = os.environ.get("OPENROUTER_API_KEY", "")
+default_model = os.environ.get("DEFAULT_LLM_MODEL", "")
+llm_analyzer = LLMAnalysisService(api_key=api_key, model_name=default_model)
 
 
 class LLMAnalysisRequest(BaseModel):
@@ -92,8 +97,9 @@ async def analyze_report(analysis_request: LLMAnalysisRequest):
         
         # 使用LLM分析财报
         # 如果用户指定了模型，则使用指定的模型
-        if analysis_request.model_name and analysis_request.model_name != llm_analyzer.model_name:
-            llm_analyzer.model_name = analysis_request.model_name
+        model_to_use = analysis_request.model_name if analysis_request.model_name else default_model
+        if model_to_use != llm_analyzer.model_name:
+            llm_analyzer.model_name = model_to_use
             
         analysis_result = llm_analyzer.analyze_financial_report(report_content, company_info)
         
@@ -187,10 +193,29 @@ async def compare_reports(
 @router.get("/models")
 async def get_available_models():
     """获取可用的LLM模型列表"""
-    # 这里可以根据实际情况返回支持的模型列表
-    models = [
-        {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "description": "适用于一般财报分析，速度快"},
-        {"id": "gpt-4", "name": "GPT-4", "description": "适用于复杂财报分析，理解能力更强"},
-        {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "description": "GPT-4的改进版本，速度更快"}
-    ]
+    # 从环境变量获取可用的模型列表，如果没有则使用默认列表
+    try:
+        # 获取 OpenRouter 的可用模型
+        models = [
+            {"id": "openrouter/anthropic/claude-3.7-sonnet", 
+             "name": "Claude 3.7 Sonnet", 
+             "description": "最新的 Claude 3.7 模型，适用于复杂财报分析"}
+        ]
+        
+        # 添加一些可能的替代模型
+        additional_models = os.environ.get("ADDITIONAL_LLM_MODELS", "")
+        if additional_models:
+            try:
+                additional_models_list = json.loads(additional_models)
+                models.extend(additional_models_list)
+            except json.JSONDecodeError:
+                pass
+    except Exception as e:
+        # 出错时使用默认列表
+        models = [
+            {"id": "openrouter/anthropic/claude-3.7-sonnet", 
+             "name": "Claude 3.7 Sonnet", 
+             "description": "适用于复杂财报分析"}
+        ]
+    
     return JSONResponse(content={"models": models})
