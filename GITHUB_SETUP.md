@@ -18,7 +18,7 @@
 
 ```bash
 # 进入项目目录
-cd financial_crawler
+cd Financial_Platform
 
 # 设置远程仓库URL（替换YOUR_USERNAME为您的GitHub用户名）
 git remote add origin https://github.com/YOUR_USERNAME/Financial_Platform.git
@@ -30,7 +30,7 @@ git push -u origin main
 ## 3. 项目结构
 
 ```
-financial_crawler/
+Financial_Platform/
 ├── app/
 │   ├── models/
 │   │   └── crawler_models.py
