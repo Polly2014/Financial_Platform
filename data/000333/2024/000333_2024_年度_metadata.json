@@ -1,0 +1,22 @@
+{
+  "crawler_metadata": {
+    "source": "巨潮资讯网",
+    "crawl_time": "2025-05-16 15:59:53",
+    "url": "http://static.cninfo.com.cn/finalpage/2025-03-29/1222951198.PDF",
+    "status": "success",
+    "checksum": "383b609cc6c197b07e3c52c3ae8e1e22360ce8fb033785cafd51a86475108b62"
+  },
+  "report_metadata": {
+    "company_name": "美的集团",
+    "stock_code": "000333",
+    "report_type": "年度报告",
+    "report_period": "2024年年度报告",
+    "publish_date": 1743177600000
+  },
+  "file_info": {
+    "file_name": "000333_2024_年度.pdf",
+    "file_size": 517769,
+    "file_path": "data/000333/2024/000333_2024_年度.pdf",
+    "text_path": "data/000333/2024/000333_2024_年度.txt"
+  }
+}

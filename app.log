@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "/workspace/financial_crawler/main.py", line 3, in <module>
+    from fastapi import FastAPI, Request
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/__init__.py", line 7, in <module>
+    from .applications import FastAPI as FastAPI
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/applications.py", line 16, in <module>
+    from fastapi import routing
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/routing.py", line 24, in <module>
+    from fastapi.dependencies.models import Dependant
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/dependencies/models.py", line 3, in <module>
+    from fastapi.security.base import SecurityBase
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/security/__init__.py", line 1, in <module>
+    from .api_key import APIKeyCookie as APIKeyCookie
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/security/api_key.py", line 3, in <module>
+    from fastapi.openapi.models import APIKey, APIKeyIn
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/fastapi/openapi/models.py", line 103, in <module>
+    class Schema(BaseModel):
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/pydantic/main.py", line 286, in __new__
+    cls.__try_update_forward_refs__()
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/pydantic/main.py", line 808, in __try_update_forward_refs__
+    update_model_forward_refs(cls, cls.__fields__.values(), cls.__config__.json_encoders, localns, (NameError,))
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/pydantic/typing.py", line 562, in update_model_forward_refs
+    update_field_forward_refs(f, globalns=globalns, localns=localns)
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/pydantic/typing.py", line 528, in update_field_forward_refs
+    field.type_ = evaluate_forwardref(field.type_, globalns, localns or None)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/openhands/poetry/openhands-ai-5O4_aCHf-py3.12/lib/python3.12/site-packages/pydantic/typing.py", line 66, in evaluate_forwardref
+    return cast(Any, type_)._evaluate(globalns, localns, set())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ForwardRef._evaluate() missing 1 required keyword-only argument: 'recursive_guard'
