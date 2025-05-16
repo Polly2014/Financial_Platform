@@ -1,2 +1,6 @@
 Financial_Platform.tar.gz
 *.log
+*.pdf
+*.json
+
+/data/*
