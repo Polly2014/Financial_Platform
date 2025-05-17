@@ -25,10 +25,10 @@
 
 ```bash
 # 构建Docker镜像
-docker build -t financial-crawler .
+docker build -t financial-platform .
 
 # 运行容器
-docker run -p 12000:12000 -v $(pwd)/data:/app/data financial-crawler
+docker run -p 12000:12000 -v $(pwd)/data:/app/data financial-platform
 ```
 
 ### 本地开发
@@ -36,8 +36,8 @@ docker run -p 12000:12000 -v $(pwd)/data:/app/data financial-crawler
 1. 克隆仓库
 
 ```bash
-git clone https://github.com/yourusername/financial-crawler.git
-cd financial-crawler
+git clone https://github.com/yourusername/financial-platform.git
+cd financial-platform
 ```
 
 2. 安装依赖

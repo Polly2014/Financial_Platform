@@ -11,10 +11,11 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from pathlib import Path
 
 from app.services.crawler_service import CrawlerService
 from app.services.llm_analysis_service import LLMAnalysisService
-from app.models.crawler_models import CrawlRequest
+from app.models.crawler_models import CrawlerRequest
 
 # 加载环境变量
 load_dotenv()
@@ -43,7 +44,7 @@ class LLMAnalysisRequest(BaseModel):
     stock_code: str
     year: int
     report_type: str = "年度报告"
-    model_name: Optional[str] = "gpt-3.5-turbo"
+    model_name: Optional[str] = "openrouter/anthropic/claude-3.7-sonnet"
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -57,40 +58,56 @@ async def get_llm_analysis_page(request: Request):
 
 @router.post("/analyze")
 async def analyze_report(analysis_request: LLMAnalysisRequest):
-    """使用LLM分析财报"""
+    """使用LLM分析财报，直接从已爬取的数据中获取内容"""
     try:
-        # 首先获取财报内容
-        crawl_request = CrawlRequest(
-            stock_code=analysis_request.stock_code,
-            year=analysis_request.year,
-            report_type=analysis_request.report_type
-        )
+        # 构建文件路径，类似于 analysis.py 中的逻辑
+        report_folder = Path("data") / analysis_request.stock_code / str(analysis_request.year)
+        text_path = report_folder / f"{analysis_request.stock_code}_{analysis_request.year}_{analysis_request.report_type.replace('报告', '')}.txt"
         
-        # 爬取财报
-        crawl_result = crawler_service.crawl_report(
-            crawl_request.stock_code,
-            crawl_request.year,
-            crawl_request.report_type
-        )
-        
-        if crawl_result.get("status") == "failed":
-            raise HTTPException(status_code=404, detail=crawl_result.get("error_message", "财报获取失败"))
-        
-        # 提取财报内容
-        report_content = crawl_result.get("report_content", "")
-        if not report_content:
-            # 尝试从文件中读取
-            file_path = crawl_result.get("file_info", {}).get("text_path")
-            if file_path and os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    report_content = f.read()
+        # 检查文件是否存在
+        if not text_path.exists():
+            # 如果文件不存在，则尝试爬取
+            crawl_request = CrawlerRequest(
+                stock_code=analysis_request.stock_code,
+                year=analysis_request.year,
+                report_type=analysis_request.report_type
+            )
+            
+            # 爬取财报
+            crawl_result = crawler_service.crawl_report(
+                crawl_request.stock_code,
+                crawl_request.year,
+                crawl_request.report_type
+            )
+            
+            if crawl_result.get("status") == "failed":
+                raise HTTPException(status_code=404, detail=crawl_result.get("error_message", "财报获取失败"))
+            
+            # 提取财报内容
+            report_content = crawl_result.get("report_content", "")
+            company_name = crawl_result.get("basic_info", {}).get("company_name", "")
+        else:
+            # 如果文件存在，直接读取内容
+            with open(text_path, "r", encoding="utf-8") as f:
+                report_content = f.read()
+            
+            # 尝试读取元数据文件以获取公司名称
+            metadata_path = report_folder / f"{analysis_request.stock_code}_{analysis_request.year}_{analysis_request.report_type.replace('报告', '')}_meta.json"
+            company_name = ""
+            if metadata_path.exists():
+                try:
+                    with open(metadata_path, "r", encoding="utf-8") as f:
+                        metadata = json.load(f)
+                        company_name = metadata.get("report_metadata", {}).get("company_name", "")
+                except json.JSONDecodeError:
+                    pass
         
         if not report_content:
             raise HTTPException(status_code=404, detail="财报内容为空")
         
         # 准备公司信息
         company_info = {
-            "company_name": crawl_result.get("basic_info", {}).get("company_name", ""),
+            "company_name": company_name,
             "stock_code": analysis_request.stock_code,
             "report_period": f"{analysis_request.year}年{analysis_request.report_type}"
         }
@@ -100,19 +117,22 @@ async def analyze_report(analysis_request: LLMAnalysisRequest):
         model_to_use = analysis_request.model_name if analysis_request.model_name else default_model
         if model_to_use != llm_analyzer.model_name:
             llm_analyzer.model_name = model_to_use
+        print(f"使用模型: {llm_analyzer.model_name}")
             
         analysis_result = llm_analyzer.analyze_financial_report(report_content, company_info)
         
         if analysis_result.get("status") == "error":
             raise HTTPException(status_code=500, detail=analysis_result.get("message", "分析失败"))
         
-        # 添加原始爬取结果的基本信息
+        # 添加报告基本信息
         analysis_result["report_info"] = {
             "stock_code": analysis_request.stock_code,
             "year": analysis_request.year,
             "report_type": analysis_request.report_type,
             "company_name": company_info["company_name"],
-            "report_period": company_info["report_period"]
+            "report_period": company_info["report_period"],
+            "text_length": len(report_content),
+            "preview": report_content[:500] + "..." if len(report_content) > 500 else report_content
         }
         
         return JSONResponse(content=analysis_result)
